@@ -1,0 +1,24 @@
+{
+  "name": "Arabuscador",
+  "short_name": "Arabuscador",
+  "description": "Navegador de arquivos ArabuLang",
+  "start_url": "/arabuscador.html",
+  "display": "standalone",
+  "background_color": "#f0f0f5",
+  "theme_color": "#1e88e5",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/arabuscador.html",
+      "accept": {
+        "text/plain": [".arbl"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+[2025-10-05 13:43:31] [SISTEMA] Sistema de Monitoramento de Temperatura - Iniciado
+[2025-10-05 13:43:31] [SISTEMA] ==================================================
+[2025-10-05 13:43:31] [DADOS] Temperatura recebida: 85.0°C
+[2025-10-05 13:43:31] [PROCESSO] Analisando nível de risco...
+[2025-10-05 13:43:31] [CRÍTICO] Condição CRÍTICA detectada (> 79°C) - Valor: 85.0°C
+[2025-10-05 13:43:31] [AÇÃO] Alerta crítico emitido - Desligamento necessário
+[2025-10-05 13:43:31] [SISTEMA] ==================================================
+[2025-10-05 13:43:31] [SISTEMA] Sistema de Monitoramento - Finalizado
+[2025-10-05 13:43:48] [SISTEMA] Sistema de Monitoramento de Temperatura - Iniciado
+[2025-10-05 13:43:48] [SISTEMA] ==================================================
+[2025-10-05 13:43:48] [DADOS] Temperatura recebida: 45.0°C
+[2025-10-05 13:43:48] [PROCESSO] Analisando nível de risco...
+[2025-10-05 13:43:48] [NORMAL] Condição NORMAL detectada (< 60°C) - Valor: 45.0°C
+[2025-10-05 13:43:48] [AÇÃO] Status normal confirmado - Operação segura
+[2025-10-05 13:43:48] [SISTEMA] ==================================================
+[2025-10-05 13:43:48] [SISTEMA] Sistema de Monitoramento - Finalizado

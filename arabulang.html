@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArabuLang — Tradutor para Python 🐍</title>
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #e8f0ff, #f9faff);
+      --text: #2c3e50;
+      --accent: #1976d2;
+      --label: #1565c0;
+      --panel-bg: #ffffff;
+      --panel-border: #e6eef8;
+      --input-bg: #f8fbff;
+      --input-border: #cfd8dc;
+      --error: #c62828;
+      --shadow: rgba(0, 0, 0, 0.08);
+    }
+    body.dark {
+      --bg-gradient: linear-gradient(135deg, #0b1326, #121827);
+      --text: #e0e6f0;
+      --accent: #7bb3ff;
+      --label: #9fc9ff;
+      --panel-bg: #1f2937;
+      --panel-border: #334155;
+      --input-bg: #0f172a;
+      --input-border: #475569;
+      --error: #ef5350;
+      --shadow: rgba(0, 0, 0, 0.35);
+    }
+    body {
+      font-family: "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    .topbar {
+      width: min(1100px, 95%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    h1 {
+      color: var(--accent);
+      margin-bottom: 14px;
+      text-align: left;
+      font-weight: 700;
+      flex: 1;
+    }
+    h1::after {
+      content: " 🐍";
+      font-size: 1.1em;
+    }
+    .editor {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(280px, 1fr));
+      gap: 16px;
+      width: min(1100px, 95%);
+      align-items: start;
+    }
+    .editor > div {
+      background: var(--panel-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px var(--shadow);
+      padding: 12px;
+      border: 1px solid var(--panel-border);
+    }
+    .editor .user-panel { grid-column: 1 / -1; }
+    textarea {
+      width: 100%;
+      min-height: 360px;
+      padding: 10px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.95rem;
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      resize: vertical;
+      outline: none;
+      background: var(--input-bg);
+      color: var(--text);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.15);
+    }
+    input[type="text"] {
+      width: 100%;
+      height: 44px;
+      padding: 10px;
+      font-size: 0.95rem;
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      outline: none;
+      background: var(--panel-bg);
+      color: var(--text);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.15);
+    }
+    .label {
+      font-weight: 600;
+      margin: 8px 0 8px;
+      text-align: center;
+      color: var(--label);
+    }
+    .actions {
+      margin-top: 14px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      width: min(1100px, 95%);
+    }
+    button {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.05s;
+    }
+    button.ghost {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 8px 12px;
+    }
+    select#exemplos {
+      height: 44px;
+      padding: 0 10px;
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
+      background: var(--panel-bg);
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+    select#exemplos:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.15);
+    }
+    button:hover { filter: brightness(0.95); }
+    button:active { transform: scale(0.98); }
+    #saidaNatural.erro { color: var(--error); }
+    footer {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+    }
+    @media (max-width: 900px) {
+      .editor { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>ArabuLang — A linguagem que fala a sua língua 🐍</h1>
+    <button id="toggleTheme" class="ghost" title="Alternar tema">🌙</button>
+    <button id="voltarNavegador" class="ghost" title="Abrir navegador" onclick="window.location.href='arabuscador.html'">navegador</button>
+  </div>
+
+  <div class="editor">
+    <div>
+      <div class="label">💬 Código em ArabuLang:</div>
+      <textarea id="codigoArabu" placeholder='Digite aqui seus comandos em ArabuLang...'></textarea>
+    </div>
+    <div>
+      <div class="label">🐍 Código em Python:</div>
+      <textarea id="codigoPython" readonly></textarea>
+    </div>
+    <div>
+      <div class="label">🖥️ Saída natural:</div>
+      <textarea id="saidaNatural" readonly></textarea>
+    </div>
+    <div class="user-panel">
+      <div class="label">✍️ Resposta do usuário:</div>
+      <div id="perguntaAtual" class="label" style="font-weight:400;color:#546e7a"></div>
+      <input id="respostaUsuario" type="text" placeholder="Digite aqui a resposta..." />
+    </div>
+  </div>
+
+  <div class="actions">
+    <select id="exemplos">
+      <option value="">Escolha um exemplo...</option>
+      <option value="ex1">Pergunta e condição</option>
+      <option value="ex2">Atribuição e mostrar</option>
+    </select>
+    <button id="abrirArbl">Abrir .arbl</button>
+    <button id="carregarExemplo">Carregar</button>
+    <button id="executarAgora">Executar</button>
+    <button id="salvarArbl">Salvar .arbl</button>
+    <button id="salvarPy">Salvar .py</button>
+    <button id="copiarPython">Copiar Python</button>
+    <button id="limparCampos">Limpar</button>
+  </div>
+  <input id="fileArbl" type="file" accept=".arbl,text/plain" style="display:none" />
+
+  <footer>Desenvolvido por Arabuenã Peçanha Gomes © 2025</footer>
+
+  <script>
+    const entrada = document.getElementById('codigoArabu');
+    const saida = document.getElementById('codigoPython');
+    const saidaNatural = document.getElementById('saidaNatural');
+    const respostaInput = document.getElementById('respostaUsuario');
+    const perguntaAtual = document.getElementById('perguntaAtual');
+
+    // Tema (claro/escuro)
+    const toggleThemeBtn = document.getElementById('toggleTheme');
+    const setThemeIcon = () => {
+      if (!toggleThemeBtn) return;
+      toggleThemeBtn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+    };
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      document.body.classList.add('dark');
+    }
+    setThemeIcon();
+    if (toggleThemeBtn) {
+      toggleThemeBtn.addEventListener('click', () => {
+        document.body.classList.toggle('dark');
+        localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+        setThemeIcon();
+      });
+    }
+
+    entrada.addEventListener('input', traduzir);
+    if (respostaInput) respostaInput.addEventListener('input', traduzir);
+
+    // variáveis de controle
+    let lastWasPergunta = false;
+    let lastResposta = null;
+    const vars = {};
+    function toJS(val) {
+      return typeof val === 'number' ? String(val) : JSON.stringify(String(val));
+    }
+    function parseValor(raw) {
+      const txt = String(raw).trim();
+      if ((txt.startsWith('"') && txt.endsWith('"')) || (txt.startsWith("'") && txt.endsWith("'"))) {
+        return txt.slice(1, -1);
+      }
+      const n = Number(txt.replace(',', '.'));
+      return Number.isNaN(n) ? txt : n;
+    }
+
+    // helper: representação Python de valores
+    function reprPy(v) {
+      return typeof v === 'number'
+        ? String(v)
+        : `"${String(v).replace(/"/g, '\"')}"`;
+    }
+
+    // ações extras (copiar/limpar)
+    const btnCopiar = document.getElementById('copiarPython');
+    const btnLimpar = document.getElementById('limparCampos');
+    const btnExecutar = document.getElementById('executarAgora');
+    const btnAbrirArbl = document.getElementById('abrirArbl');
+    const fileInputArbl = document.getElementById('fileArbl');
+    const btnSalvarArbl = document.getElementById('salvarArbl');
+    const btnSalvar = document.getElementById('salvarPy');
+    const btnCarregarExemplo = document.getElementById('carregarExemplo');
+    const exemplosSelect = document.getElementById('exemplos');
+
+    const EXEMPLOS = {
+      ex1: `pergunta "Quanto é 2 mais 3?"
+se 2 mais 3 é igual 5 então
+mostrar "Acertou!"
+senão
+mostrar "Errou!"`,
+      ex2: `variável x é 10
+se x é maior que 7 então
+mostrar "x é grande"
+senão
+mostrar "x é pequeno"`
+    };
+
+    if (btnCopiar) {
+      btnCopiar.addEventListener('click', () => {
+        (navigator.clipboard && navigator.clipboard.writeText)
+          ? navigator.clipboard.writeText(saida.value).then(() => {
+              btnCopiar.textContent = 'Copiado!';
+              setTimeout(() => btnCopiar.textContent = 'Copiar Python', 1200);
+            })
+          : (function() {
+              saida.select();
+              document.execCommand && document.execCommand('copy');
+            })();
+      });
+    }
+    if (btnLimpar) {
+      btnLimpar.addEventListener('click', () => {
+        entrada.value = '';
+        saida.value = '';
+        saidaNatural.value = '';
+        if (respostaInput) respostaInput.value = '';
+        if (perguntaAtual) perguntaAtual.textContent = '';
+        saidaNatural.classList.remove('erro');
+        lastWasPergunta = false;
+        lastResposta = null;
+        // limpar variáveis armazenadas
+        Object.keys(vars).forEach(k => delete vars[k]);
+      });
+    }
+    if (btnExecutar) {
+      btnExecutar.addEventListener('click', traduzir);
+    }
+    if (btnSalvarArbl) {
+      btnSalvarArbl.addEventListener('click', () => {
+        const conteudo = entrada.value || '';
+        const blob = new Blob([conteudo], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'programa.arbl';
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+        a.remove();
+      });
+    }
+    if (btnSalvar) {
+      btnSalvar.addEventListener('click', () => {
+        const blob = new Blob([saida.value], { type: 'text/x-python;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'arabulang_traduzido.py';
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+        a.remove();
+      });
+    }
+    if (btnAbrirArbl && fileInputArbl) {
+      btnAbrirArbl.addEventListener('click', () => {
+        fileInputArbl.value = '';
+        fileInputArbl.click();
+      });
+      fileInputArbl.addEventListener('change', async () => {
+        const file = fileInputArbl.files && fileInputArbl.files[0];
+        if (!file) return;
+        const text = await file.text();
+        entrada.value = text;
+        traduzir();
+      });
+    }
+    if (btnCarregarExemplo && exemplosSelect) {
+      btnCarregarExemplo.addEventListener('click', () => {
+        const key = exemplosSelect.value;
+        if (!key || !EXEMPLOS[key]) return;
+        entrada.value = EXEMPLOS[key];
+        traduzir();
+      });
+    }
+
+    function traduzir() {
+      let linhas = entrada.value
+        .split('\n')
+        .map(l => l.trim())
+        .filter(l => l.length > 0);
+
+      let resultado = [];
+      let saidaSimulada = [];
+      let condicaoAtiva = true; // controla se deve mostrar ou não dentro do bloco
+
+      // reset state por cada tradução (mantém lastResposta entre execuções se desejado)
+      // lastWasPergunta e lastResposta são mantidos para ligar pergunta -> condição
+      linhas.forEach((linha, idx) => {
+        let py = '';
+
+        // --- tratar 'pergunta' e armazenar resposta ---
+        if (linha.startsWith('perguntar') || linha.startsWith('pergunta')) {
+          const texto = linha.match(/"(.*?)"/);
+          const pergunta = texto ? texto[1] : 'Digite algo:';
+          py = `input("${pergunta}")`;
+          if (perguntaAtual) perguntaAtual.textContent = `Pergunta: ${pergunta}`;
+          let respostaRaw = '';
+          if (respostaInput) respostaRaw = respostaInput.value;
+          const respostaNum = Number(String(respostaRaw).replace(',', '.'));
+          if (respostaRaw !== undefined && respostaRaw !== '' && !Number.isNaN(respostaNum)) {
+            lastResposta = respostaNum;
+          } else {
+            lastResposta = respostaRaw ? String(respostaRaw) : '';
+          }
+          lastWasPergunta = true;
+          saidaSimulada.push(`Pergunta: ${pergunta}`);
+          saidaSimulada.push(`Usuário respondeu: ${lastResposta === '' ? '(vazio)' : lastResposta}`);
+        }
+
+        // --- tratar 'se' com detecção se veio após pergunta ---
+        else if (linha.startsWith('se ')) {
+          // pega conteúdo entre 'se' e 'então' (se houver)
+          let condRaw = linha.replace(/^se\s+/, '').replace(/\s*então\s*$/,'').trim();
+
+          // normaliza operadores textuais
+          condRaw = condRaw
+            .replace(/mais/g, '+')
+            .replace(/menos/g, '-')
+            .replace(/vezes/g, '*')
+            .replace(/dividido por/g, '/')
+            .replace(/é igual/g, '==')
+            .replace(/é diferente de/g, '!=')
+            .replace(/é maior ou igual a/g, '>=')
+            .replace(/é menor ou igual a/g, '<=')
+            .replace(/é maior que/g, '>')
+            .replace(/é menor que/g, '<')
+            .replace(/maior ou igual a/g, '>=')
+            .replace(/menor ou igual a/g, '<=')
+            .replace(/maior que/g, '>')
+            .replace(/menor que/g, '<');
+
+          // Se a linha de 'se' vier imediatamente após uma 'pergunta', assumimos
+          // que queremos comparar a resposta do usuário com o valor esperado.
+          // Ex: pergunta "..."; se 3 mais 2 é igual 5 então  --> comparar lastResposta == 5
+          if (lastWasPergunta) {
+            // tentar extrair o lado direito (valor esperado) após '==' ou '=' ou 'é igual'
+            // simplificado: buscar último número ou string entre aspas na expressão
+            let esperado = null;
+            const matchNum = condRaw.match(/(?:==|!=|>=|<=|>|<)\s*([0-9]+(?:\.[0-9]+)?)/);
+            if (matchNum) {
+              esperado = Number(matchNum[1]);
+            } else {
+              const matchQuotes = condRaw.match(/"(.*?)"/);
+              if (matchQuotes) esperado = matchQuotes[1];
+            }
+
+            // se não encontrou com parsing, tentar pegar último token após '==' textual
+            if (esperado === null) {
+              const parts = condRaw.split(/==|!=|>=|<=|>|</);
+              if (parts.length > 1) {
+                let r = parts[parts.length-1].trim();
+                // remover aspas se tiver
+                if (r.startsWith('"') && r.endsWith('"')) r = r.slice(1,-1);
+                const rn = Number(r);
+                esperado = (!Number.isNaN(rn)) ? rn : r;
+              }
+            }
+
+            // construir condição comparando lastResposta com esperado
+            if (esperado !== null) {
+              // preparar valores para JS e para exibição em Python
+              const leftJS = typeof lastResposta === 'number' ? String(lastResposta) : JSON.stringify(String(lastResposta));
+              const rightJS = typeof esperado === 'number' ? String(esperado) : JSON.stringify(String(esperado));
+
+              const opMatch = condRaw.match(/(==|!=|>=|<=|>|<)/);
+              const operator = opMatch ? opMatch[1] : '==';
+
+              // JS: igualdade estrita quando apropriado
+              const jsOp = operator === '==' ? '===' : (operator === '!=' ? '!==' : operator);
+              const condJS = `${leftJS} ${jsOp} ${rightJS}`;
+
+              // Python (exibição): usa operadores padrão
+              const leftPy = reprPy(lastResposta);
+              const rightPy = reprPy(esperado);
+              const condPy = `${leftPy} ${operator} ${rightPy}`;
+              py = `if ${condPy}:`;
+
+              try {
+                condicaoAtiva = eval(condJS);
+              } catch {
+                condicaoAtiva = false;
+              }
+            } else {
+              // fallback: avalia a expressão original (matemática)
+              const condPy = condRaw;
+              const condJS = condRaw.replace(/==/g, '===');
+              py = `if ${condPy}:`;
+              try {
+                condicaoAtiva = eval(condJS);
+              } catch {
+                condicaoAtiva = false;
+              }
+            }
+
+            // consumiu a associação pergunta->condição
+            lastWasPergunta = false;
+          } else {
+            // comportamento padrão: avaliar expressão com substituição de variáveis
+            const condPy = condRaw;
+            let condJS = condRaw
+              .replace(/([0-9]+),([0-9]+)/g, '$1.$2');
+            condJS = condJS.replace(/\b([a-zA-Z_]\w*)\b/g, (m) => {
+              if (Object.prototype.hasOwnProperty.call(vars, m)) {
+                return toJS(vars[m]);
+              }
+              return m;
+            });
+            condJS = condJS.replace(/==/g,'===').replace(/!=/g,'!==');
+            py = `if ${condPy}:`;
+            try {
+              condicaoAtiva = eval(condJS);
+            } catch {
+              condicaoAtiva = false;
+            }
+          }
+        }
+
+        else if (linha.startsWith('senão')) {
+          py = 'else:';
+          condicaoAtiva = !condicaoAtiva;
+        }
+
+        else if (linha.startsWith('mostrar')) {
+          const texto = linha.match(/"(.*?)"/);
+          py = texto ? `print("${texto[1]}")` : '# mostrar sem texto reconhecido';
+          if (condicaoAtiva && texto) saidaSimulada.push(texto[1]);
+        }
+
+        else if (/^(variavel|variável)\s/i.test(linha)) {
+          const m = linha.match(/^(variavel|variável)\s+([a-zA-Z_]\w*)\s+é\s+(.*)$/i);
+          if (m) {
+            const nome = m[2];
+            const valorRaw = m[3].trim();
+            const valor = parseValor(valorRaw);
+            vars[nome] = valor;
+            py = `${nome} = ${reprPy(valor)}`;
+          } else {
+            py = linha.replace(/^(variavel|variável)\s+/i, '').replace(' é ', ' = ');
+          }
+        }
+
+        else if (linha.startsWith('parar')) {
+          py = 'break';
+        }
+
+        else if (linha.startsWith('comentar')) {
+          const texto = linha.match(/"(.*?)"/);
+          py = texto ? `# ${texto[1]}` : '# comentário';
+        }
+
+        else {
+          py = '# comando desconhecido: ' + linha;
+        }
+
+        resultado.push(py);
+      });
+
+      saida.value = resultado.join('\n');
+      saidaNatural.value = saidaSimulada.join('\n');
+      // destacar erro na saída, quando pertinente
+      saidaNatural.classList.toggle('erro', /err(o|ou|ado)/i.test(saidaNatural.value));
+    }
+  </script>
+</body>
+</html>

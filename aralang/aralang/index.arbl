@@ -1,0 +1,38 @@
+# Página Inicial do ArabuLang
+# Este arquivo serve como uma homepage para o Arabuscador
+
+mostrar("# Bem-vindo ao Mundo ArabuLang! 🐍")
+mostrar("")
+mostrar("## O que é ArabuLang?")
+mostrar("ArabuLang é uma linguagem de programação didática em português")
+mostrar("criada para facilitar o aprendizado de programação.")
+mostrar("")
+mostrar("## Recursos Disponíveis:")
+mostrar("")
+mostrar("1. **Sistema de Ensino** - Aprenda a programar passo a passo")
+mostrar("2. **Exemplos Práticos** - Veja códigos de exemplo")
+mostrar("3. **Navegador de Arquivos** - Execute seus próprios programas")
+mostrar("")
+mostrar("## Exemplo Rápido:")
+
+# Exemplo de código
+variavel nome = pergunta("Digite seu nome:")
+variavel idade = pergunta("Digite sua idade:")
+
+mostrar("")
+mostrar("Olá, " + nome + "!")
+
+se idade >= 18 entao
+  mostrar("Você é maior de idade.")
+senao
+  mostrar("Você é menor de idade.")
+fimse
+
+mostrar("")
+mostrar("## Links Úteis:")
+mostrar("- [Editor ArabuLang](arabulang.html)")
+mostrar("- [Documentação](https://exemplo.com/docs)")
+mostrar("- [Exemplos](https://exemplo.com/exemplos)")
+mostrar("")
+mostrar("---")
+mostrar("Desenvolvido por Arabuenã Peçanha Gomes © 2025")

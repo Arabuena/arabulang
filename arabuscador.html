@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arabuscador — Navegador Web ArabuLang 🐍</title>
+  <!-- Manifest incorporado diretamente para evitar erros de CORS -->
+  <script type="application/json" id="app-manifest">
+    {
+      "name": "Arabuscador",
+      "short_name": "Arabuscador",
+      "description": "Navegador de arquivos ArabuLang",
+      "start_url": "/arabuscador.html",
+      "display": "standalone",
+      "background_color": "#f0f0f5",
+      "theme_color": "#1e88e5",
+      "icons": [
+        {
+          "src": "icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ],
+      "file_handlers": [
+        {
+          "action": "/arabuscador.html",
+          "accept": {
+            "text/plain": [".arbl"]
+          }
+        }
+      ]
+    }
+  </script>
+  <style>
+    :root {
+      --primary-color: #FF1B2D;
+      --secondary-color: #FF8C2D;
+      --dark-color: #222;
+      --light-color: #fff;
+      --gray-color: #f0f0f5;
+      --border-color: #ddd;
+      --hover-color: #f5f5f5;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: var(--light-color);
+      color: var(--dark-color);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    /* Barra de navegação estilo Opera */
+    .browser-header {
+      background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 8px 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .browser-logo {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    
+    .browser-tabs {
+      display: flex;
+      background: #f8f8f8;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0 10px;
+    }
+    
+    .tab {
+      padding: 10px 15px;
+      border-right: 1px solid var(--border-color);
+      background: #f0f0f0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 200px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    
+    .tab.active {
+      background: white;
+      border-bottom: 2px solid var(--primary-color);
+    }
+    
+    .tab-close {
+      font-size: 14px;
+      opacity: 0.7;
+    }
+    
+    .tab-close:hover {
+      opacity: 1;
+    }
+    
+    .new-tab {
+      padding: 10px 15px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    
+    .address-bar {
+      display: flex;
+      padding: 10px;
+      background: #f8f8f8;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .nav-buttons {
+      display: flex;
+      gap: 10px;
+      margin-right: 10px;
+    }
+    
+    .nav-button {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: #555;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .nav-button:hover {
+      background: #e0e0e0;
+    }
+    
+    .url-input {
+      flex-grow: 1;
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      outline: none;
+      font-size: 14px;
+    }
+    
+    .url-input:focus {
+      border-color: var(--primary-color);
+    }
+    
+    /* Conteúdo principal */
+    .browser-content {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      overflow: hidden;
+    }
+    
+    .page-content {
+      flex-grow: 1;
+      overflow: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    /* Estilo para homepage */
+    .homepage {
+      width: 90%;
+      max-width: 1100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    
+    .search-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 20px 0;
+    }
+    
+    .exemplo-button {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 15px 30px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 20px 0;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+    }
+    
+    .exemplo-button:hover {
+      background-color: var(--secondary-color);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 12px 20px;
+      font-size: 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 25px;
+      outline: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .search-input:focus {
+      border-color: var(--primary-color);
+    }
+    
+    .quick-links {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      width: 100%;
+      max-width: 800px;
+    }
+    
+    .quick-link {
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .quick-link:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .quick-link-icon {
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: var(--primary-color);
+    }
+    
+    /* Editor de código */
+    .editor {
+      display: flex;
+      width: 100%;
+      max-width: 1100px;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    
+    .editor-container {
+      width: 100%;
+      display: none; /* Inicialmente oculto, mostrado quando um arquivo é aberto */
+    }
+    
+    textarea {
+      width: 32%;
+      height: 420px;
+      padding: 10px;
+      font-family: Consolas, monospace;
+      font-size: 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      resize: none;
+      outline: none;
+      background: #fff;
+    }
+    
+    textarea:focus {
+      border-color: var(--primary-color);
+    }
+    
+    .label {
+      font-weight: bold;
+      margin: 10px 0 5px;
+      text-align: center;
+    }
+    
+    /* Componentes adicionais */
+    .file-input {
+      display: none;
+    }
+    
+    .recent-files {
+      width: 90%;
+      max-width: 1100px;
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      display: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .recent-files h3 {
+      margin-top: 0;
+      color: var(--primary-color);
+      margin-bottom: 10px;
+    }
+    
+    .recent-files ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    
+    .recent-files li {
+      padding: 10px;
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .recent-files li:hover {
+      background-color: var(--hover-color);
+    }
+    
+    .recent-files li:last-child {
+      border-bottom: none;
+    }
+    
+    .file-name {
+      flex-grow: 1;
+    }
+    
+    .file-actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .file-actions button {
+      background: none;
+      border: none;
+      color: var(--primary-color);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 5px 10px;
+      border-radius: 4px;
+    }
+    
+    .file-actions button:hover {
+      background: #f0f0f0;
+    }
+    
+    .about-section {
+      width: 90%;
+      max-width: 1100px;
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      display: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .about-section h3 {
+      color: var(--primary-color);
+      margin-bottom: 15px;
+    }
+    
+    footer {
+      padding: 10px;
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+      border-top: 1px solid var(--border-color);
+      background: #f8f8f8;
+    }
+    
+    /* Botões de ação */
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      justify-content: center;
+    }
+    
+    .btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .btn:hover {
+      background-color: #e01020;
+    }
+    
+    .btn-secondary {
+      background-color: var(--secondary-color);
+    }
+    
+    .btn-secondary:hover {
+      background-color: #e07020;
+    }
+    
+    .btn-outline {
+      background-color: transparent;
+      color: var(--primary-color);
+      border: 1px solid var(--primary-color);
+    }
+    
+    .btn-outline:hover {
+      background-color: #fff0f0;
+    }
+
+    /* Tema escuro */
+    body.dark {
+      --light-color: #0b1326;
+      --dark-color: #e0e6f0;
+      --gray-color: #121827;
+      --border-color: #334155;
+      --hover-color: #1f2937;
+      background: var(--light-color);
+      color: var(--dark-color);
+    }
+    body.dark .browser-tabs { background: #0f172a; border-bottom-color: var(--border-color); }
+    body.dark .tab { background: #1f2937; color: var(--dark-color); border-right-color: var(--border-color); }
+    body.dark .tab.active { background: #0b1326; border-bottom-color: var(--primary-color); }
+    body.dark .address-bar { background: #0f172a; border-bottom-color: var(--border-color); }
+    body.dark .nav-button { color: #cbd5e1; }
+    body.dark .nav-button:hover { background: #1f2937; }
+    body.dark .url-input { background: #0b1326; color: var(--dark-color); border-color: var(--border-color); }
+    body.dark .quick-link { background: #1f2937; color: var(--dark-color); box-shadow: 0 2px 5px rgba(0,0,0,0.35); }
+    body.dark textarea { background: #0f172a; color: var(--dark-color); border-color: var(--border-color); }
+    body.dark .recent-files,
+    body.dark .about-section,
+    body.dark .page-view { background: #1f2937; color: var(--dark-color); box-shadow: 0 2px 5px rgba(0,0,0,0.35); }
+    body.dark .page-question { background: #0f172a; border-color: var(--border-color); }
+    body.dark footer { background: #0f172a; color: #94a3b8; border-top-color: var(--border-color); }
+  </style>
+</head>
+<body>
+  <!-- Cabeçalho do navegador -->
+  <div class="browser-header">
+    <div class="browser-logo">🐍 Arabuscador</div>
+    <button id="toggleTheme" class="nav-button" title="Alternar tema">🌙</button>
+  </div>
+  
+  <!-- Abas do navegador -->
+  <div class="browser-tabs">
+    <div class="tab active" data-tab="home">
+      <span>Página Inicial</span>
+      <span class="tab-close">✕</span>
+    </div>
+    <div class="new-tab">+</div>
+  </div>
+  
+  <!-- Barra de endereço -->
+  <div class="address-bar">
+    <div class="nav-buttons">
+      <button class="nav-button" id="btnVoltar">←</button>
+      <button class="nav-button" id="btnAvancar">→</button>
+      <button class="nav-button" id="btnRecarregar">↻</button>
+    </div>
+    <input type="text" class="url-input" id="urlInput" placeholder="Digite um endereço .arbl ou pesquise...">
+  </div>
+  
+  <script>
+    // Função para verificar parâmetros na URL
+    function verificarParametrosURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const arquivo = urlParams.get('arquivo');
+      
+      if (arquivo) {
+        // Decodificar o caminho do arquivo
+        const caminhoArquivo = decodeURIComponent(arquivo);
+        
+        // Verificar se é uma URL de arquivo local
+        if (caminhoArquivo.startsWith('file://')) {
+          const localPath = caminhoArquivo.replace('file://', '');
+          abrirArquivoLocal(localPath);
+        } else if (caminhoArquivo.startsWith('arbl://')) {
+          // Protocolo personalizado arbl://
+          const arblPath = caminhoArquivo.replace('arbl://', '');
+          abrirArquivoArbl(arblPath);
+        } else {
+          // Tentar abrir como caminho relativo
+          fetch(caminhoArquivo)
+            .then(response => response.text())
+            .then(conteudo => {
+              abrirArquivo(caminhoArquivo, conteudo);
+            })
+            .catch(erro => {
+              console.error('Erro ao abrir arquivo:', erro);
+              mostrarMensagem('Erro ao abrir arquivo: ' + erro.message);
+            });
+        }
+      } else {
+        // Verificar se há arquivos de exemplo para mostrar na inicialização
+        carregarExemplosIniciais();
+      }
+    }
+    
+    // Função para abrir diretamente o exemplo.arbl
+    function abrirExemploArbl() {
+      const conteudoExemplo = `comentar "Exemplo de programa ArabuLang"
+mostrar "Bem-vindo ao ArabuLang!"
+variavel x é 10
+se x é maior que 7 então
+mostrar "x é grande"
+senão
+mostrar "x é pequeno"
+`;
+      abrirArquivo("exemplo.arbl", conteudoExemplo);
+      adicionarArquivoRecente("exemplo.arbl", conteudoExemplo);
+      mostrarMensagem("Arquivo exemplo.arbl aberto com sucesso!");
+    }
+    
+    // Função para carregar exemplos iniciais
+    function carregarExemplosIniciais() {
+      // Tentar carregar o arquivo exemplo.arbl por padrão
+      fetch('exemplo.arbl')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Arquivo não encontrado');
+          }
+          return response.text();
+        })
+        .then(conteudo => {
+          // Adicionar aos links rápidos
+          const linkExemplo = document.createElement('div');
+          linkExemplo.className = 'quick-link';
+          linkExemplo.innerHTML = `
+            <div class="quick-link-icon">📄</div>
+            <div>exemplo.arbl</div>
+          `;
+          linkExemplo.addEventListener('click', () => {
+            abrirArquivo('exemplo.arbl', conteudo);
+          });
+          
+          // Adicionar à lista de arquivos recentes
+          adicionarArquivoRecente('exemplo.arbl', conteudo);
+        })
+        .catch(erro => {
+          console.log('Arquivo exemplo.arbl não encontrado:', erro);
+        });
+        
+      // Tentar carregar o arquivo index.arbl por padrão
+      fetch('index.arbl')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Arquivo não encontrado');
+          }
+          return response.text();
+        })
+        .then(conteudo => {
+          // Adicionar aos links rápidos
+          const linkIndex = document.createElement('div');
+          linkIndex.className = 'quick-link';
+          linkIndex.innerHTML = `
+            <div class="quick-link-icon">🏠</div>
+            <div>index.arbl</div>
+          `;
+          linkIndex.addEventListener('click', () => {
+            abrirArquivo('index.arbl', conteudo);
+          });
+          
+          // Adicionar à lista de arquivos recentes
+          adicionarArquivoRecente('index.arbl', conteudo);
+        })
+        .catch(erro => {
+          console.log('Arquivo index.arbl não encontrado:', erro);
+        });
+    }
+  </script>
+  
+  <!-- Conteúdo principal -->
+  <div class="browser-content">
+    <div class="page-content">
+      <!-- Homepage -->
+      <div class="homepage" id="homepage">
+        <div class="search-container">
+          <input type="text" class="search-input" id="searchInput" placeholder="Pesquisar ou digitar endereço .arbl">
+        </div>
+        
+        <div style="margin: 20px 0; text-align: center;">
+          <button class="btn" id="btnAbrirExemplo" style="font-size: 18px; padding: 12px 24px;">
+            Abrir exemplo.arbl
+          </button>
+        </div>
+        
+        <div class="quick-links">
+          <div class="quick-link" id="linkExemplo">
+            <div class="quick-link-icon">📄</div>
+            <div>exemplo.arbl</div>
+          </div>
+          <div class="quick-link" id="linkIndex">
+            <div class="quick-link-icon">🏠</div>
+            <div>index.arbl</div>
+          </div>
+          <div class="quick-link" id="linkExemplos">
+            <div class="quick-link-icon">📚</div>
+            <div>Exemplos</div>
+          </div>
+          <div class="quick-link" id="linkNovoArquivo">
+            <div class="quick-link-icon">📝</div>
+            <div>Novo Arquivo</div>
+          </div>
+          <div class="quick-link" id="linkAbrirArquivo">
+            <div class="quick-link-icon">📂</div>
+            <div>Abrir Arquivo</div>
+          </div>
+          <div class="quick-link" id="linkRecentes">
+            <div class="quick-link-icon">🕒</div>
+            <div>Recentes</div>
+          </div>
+          <div class="quick-link" id="linkTutorial">
+            <div class="quick-link-icon">📖</div>
+            <div>Tutorial</div>
+          </div>
+          <div class="quick-link" id="linkEditar">
+            <div class="quick-link-icon">✏️</div>
+            <div>Editor ArabuLang</div>
+          </div>
+          <div class="quick-link" id="linkSobre">
+            <div class="quick-link-icon">ℹ️</div>
+            <div>Sobre</div>
+          </div>
+          <div class="quick-link" id="linkConfig">
+            <div class="quick-link-icon">⚙️</div>
+            <div>Configurações</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Arquivos recentes -->
+      <div class="recent-files" id="arquivosRecentes">
+        <h3>Arquivos Recentes</h3>
+        <ul id="listaRecentes">
+          <!-- Preenchido dinamicamente -->
+        </ul>
+      </div>
+      
+      <!-- Sobre o Arabuscador -->
+      <div class="about-section" id="sobreSection">
+        <h3>Sobre o Arabuscador</h3>
+        <p>O Arabuscador é um navegador especializado para arquivos .arbl do ArabuLang, uma linguagem didática para ensinar programação em português.</p>
+        <p>Desenvolvido por Arabuenã Peçanha Gomes © 2025</p>
+        <p>Recursos:</p>
+        <ul>
+          <li>Interface inspirada em navegadores modernos</li>
+          <li>Abrir arquivos .arbl como páginas web</li>
+          <li>Executar código ArabuLang diretamente</li>
+          <li>Visualizar a tradução para Python</li>
+          <li>Salvar arquivos .arbl</li>
+          <li>Histórico de arquivos recentes</li>
+          <li>Navegação entre páginas</li>
+        </ul>
+        
+        <div class="action-buttons">
+          <button class="btn" id="btnRegistrarProtocolo">Registrar como Navegador Padrão</button>
+          <button class="btn btn-secondary" id="btnVoltar">Voltar</button>
+        </div>
+      </div>
+      
+      <!-- Editor de código -->
+      <div class="editor-container" id="editorContainer">
+        <div class="action-buttons">
+          <button class="btn" id="btnExecutar">▶️ Executar</button>
+          <button class="btn btn-secondary" id="btnSalvar">💾 Salvar</button>
+          <button class="btn btn-outline" id="btnEditar">✏️ Editar no ArabuLang</button>
+        </div>
+        
+        <div class="editor">
+          <div>
+            <div class="label">💬 Código em ArabuLang:</div>
+            <textarea id="codigoArabu" placeholder='Abra um arquivo .arbl ou digite comandos em ArabuLang...'></textarea>
+          </div>
+          <div>
+            <div class="label">🐍 Código em Python:</div>
+            <textarea id="codigoPython" readonly></textarea>
+          </div>
+          <div>
+            <div class="label">🖥️ Saída natural:</div>
+            <textarea id="saidaNatural" readonly style="background:#f9f9f9;color:#222;"></textarea>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Visualização de Página -->
+      <div class="page-view" id="pageView">
+        <div class="page-title" id="pageTitle"></div>
+        <div class="page-content" id="pageContent"></div>
+        <div class="page-actions">
+          <button class="btn btn-outline" id="btnVerCodigo">Ver código</button>
+          <button class="btn btn-secondary" id="btnSalvarPagina">Salvar .arbl</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Input de arquivo oculto -->
+  <input type="file" id="inputArquivo" class="file-input" accept=".arbl,text/plain">
+  
+  <footer>Desenvolvido por Arabuenã Peçanha Gomes © 2025</footer>
+</body>
+</html>
+
+<style>
+  .page-view {
+    width: 90%;
+    max-width: 1100px;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    display: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    position: relative;       /* NOVO */
+    z-index: 1000;            /* NOVO: aparece acima de outros blocos */
+  }
+  .page-title {
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+  }
+  .page-content p {
+    margin: 8px 0;
+    line-height: 1.4;
+  }
+  .page-question {
+    margin: 12px 0;
+    padding: 10px;
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    background: #fafafa;
+  }
+  .page-question input {
+    margin-top: 8px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    outline: none;
+  }
+  .page-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    justify-content: flex-end;
+  }
+</style>
+<script>
+  // Estado e referências
+  const editorContainer = document.getElementById('editorContainer');
+  const homepage = document.querySelector('.homepage'); // primeira referência segue existindo
+  const recentFilesPanel = document.getElementById('arquivosRecentes');
+  const listaRecentes = document.getElementById('listaRecentes');
+  const codigoArabu = document.getElementById('codigoArabu');
+  const codigoPython = document.getElementById('codigoPython');
+  const saidaNatural = document.getElementById('saidaNatural');
+  const urlInputEl = document.getElementById('urlInput');
+  const inputArquivoEl = document.getElementById('inputArquivo');
+  const sobreSection = document.getElementById('sobreSection'); // NOVO
+
+  const pageView = document.getElementById('pageView');
+  const pageTitle = document.getElementById('pageTitle');
+  const pageContent = document.getElementById('pageContent');
+  const btnVerCodigo = document.getElementById('btnVerCodigo');
+  const btnSalvarPagina = document.getElementById('btnSalvarPagina');
+
+  let historico = [];
+  let historicoIndex = -1;
+  let currentFileName = null;
+
+  function setView(which) {
+    const showAll = (selector, on) => {
+      document.querySelectorAll(selector).forEach(el => el.style.display = on ? 'block' : 'none');
+    };
+    showAll('.homepage', which === 'home');
+    showAll('#arquivosRecentes', which === 'recentes');
+    showAll('#editorContainer', which === 'editor');
+    showAll('#pageView', which === 'pagina');
+    showAll('#sobreSection', which === 'sobre');
+  }
+
+  function mostrarMensagem(msg) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'toast';
+      toast.style.position = 'fixed';
+      toast.style.bottom = '16px';
+      toast.style.left = '50%';
+      toast.style.transform = 'translateX(-50%)';
+      toast.style.background = '#333';
+      toast.style.color = '#fff';
+      toast.style.padding = '8px 12px';
+      toast.style.borderRadius = '8px';
+      toast.style.boxShadow = '0 4px 12px rgba(0,0,0,.25)';
+      toast.style.zIndex = '9999';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    setTimeout(() => { if (toast) toast.style.opacity = '0'; }, 2200);
+  }
+
+  function pushHistorico(item) {
+    if (historicoIndex < historico.length - 1) historico = historico.slice(0, historicoIndex + 1);
+    historico.push(item);
+    historicoIndex = historico.length - 1;
+  }
+  function navegarHistorico(delta) {
+    const newIndex = historicoIndex + delta;
+    if (newIndex < 0 || newIndex >= historico.length) return;
+    historicoIndex = newIndex;
+    const item = historico[historicoIndex];
+    if (!item) return;
+    urlInputEl.value = item.nome || '';
+    currentFileName = item.nome;
+    renderPagina(item.conteudo || '');
+    setView('pagina');
+  }
+
+  // Cria parágrafos com links clicáveis para http(s), arbl:// e *.arbl
+  function addParagraphWithLinks(text) {
+    const p = document.createElement('p');
+    const parts = [];
+    const regex = /(https?:\/\/[^\s"]+|arbl:\/\/[^\s"]+|[A-Za-z0-9_\-\/\.]+\.arbl)/g;
+    let lastIndex = 0;
+    let m;
+    while ((m = regex.exec(text)) !== null) {
+      if (m.index > lastIndex) parts.push(document.createTextNode(text.slice(lastIndex, m.index)));
+      const token = m[0];
+      const a = document.createElement('a');
+      a.href = token;
+      a.textContent = token;
+      a.style.color = 'var(--primary-color)';
+      a.style.textDecoration = 'none';
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (token.startsWith('http://') || token.startsWith('https://')) {
+          window.open(token, '_blank');
+        } else if (token.startsWith('arbl://')) {
+          carregarArquivo(token.replace('arbl://', ''));
+        } else if (/\.arbl$/i.test(token)) {
+          carregarArquivo(token);
+        }
+      });
+      parts.push(a);
+      lastIndex = regex.lastIndex;
+    }
+    if (lastIndex < text.length) parts.push(document.createTextNode(text.slice(lastIndex)));
+    parts.forEach(node => p.appendChild(node));
+    return p;
+  }
+
+  function resolveCaminhos(caminho) {
+    const c = caminho.replace(/^\/+/, '');
+    return [
+      c,
+      `./${c}`,
+      `aralang/aralang/${c}`
+    ];
+  }
+
+  async function carregarArquivo(caminho) {
+    const candidatos = resolveCaminhos(caminho);
+    for (const c of candidatos) {
+      try {
+        const r = await fetch(c);
+        if (r.ok) {
+          const t = await r.text();
+          currentFileName = c;
+          if (urlInputEl) urlInputEl.value = c;
+          renderPagina(t);
+          setView('pagina');
+          updateActiveTabTitle(c);
+          // site: atualizar título, histórico e rolar topo
+          document.title = `Arabuscador — ${c}`;
+          history.pushState({ arquivo: c }, '', `?arquivo=${encodeURIComponent(c)}`);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          // manter editor sincronizado para "Ver código"
+          if (codigoArabu) codigoArabu.value = t;
+          adicionarArquivoRecente(c, t);
+          pushHistorico({ nome: c, conteudo: t });
+          return true;
+        }
+      } catch (e) { /* tenta próximo candidato */ }
+    }
+    mostrarMensagem(`Arquivo não encontrado: ${caminho}`);
+    return false;
+  }
+
+  async function carregarPaginaPadrao() {
+    const ok = await carregarArquivo('index.arbl');
+    if (!ok) await carregarArquivo('exemplo.arbl');
+  }
+
+  function limparParaHome() {
+    currentFileName = null;
+    if (urlInputEl) urlInputEl.value = '';
+    if (pageTitle) pageTitle.textContent = '';
+    if (pageContent) pageContent.innerHTML = '';
+    setView('home');
+    updateActiveTabTitle('Página Inicial');
+    document.title = 'Arabuscador';
+    try { history.pushState({}, '', location.pathname); } catch (e) {}
+  }
+
+  function abrirArquivoLocal(localPath) {
+    mostrarMensagem('Use "Abrir Arquivo" para carregar arquivos locais (file://).');
+  }
+
+  function updateActiveTabTitle(name) {
+    const title = (name || 'Página Inicial').split('/').pop();
+    const span = document.querySelector('.browser-tabs .tab.active span:first-child');
+    if (span) span.textContent = title;
+  }
+
+  // ===== Parser/execução leve para Página =====
+  const vars = {};
+  let lastResposta = null;
+  let lastWasPergunta = false;
+
+  function toJS(val) { return typeof val === 'number' ? String(val) : JSON.stringify(String(val)); }
+  function parseValor(raw) {
+    const txt = String(raw).trim();
+    if ((txt.startsWith('"') && txt.endsWith('"')) || (txt.startsWith("'") && txt.endsWith("'"))) return txt.slice(1, -1);
+    const n = Number(txt.replace(',', '.'));
+    return Number.isNaN(n) ? txt : n;
+  }
+  function reprPy(v) { return typeof v === 'number' ? String(v) : `"${String(v).replace(/"/g, '\\"')}"`; }
+
+  function avaliarCondicao(condRaw) {
+    let condJS = condRaw.replace(/([0-9]+),([0-9]+)/g, '$1.$2')
+      .replace(/mais/g, '+')
+      .replace(/menos/g, '-')
+      .replace(/vezes/g, '*')
+      .replace(/dividido por/g, '/')
+      .replace(/é igual/g, '==')
+      .replace(/é diferente de/g, '!=')
+      .replace(/é maior ou igual a/g, '>=')
+      .replace(/é menor ou igual a/g, '<=')
+      .replace(/é maior que/g, '>')
+      .replace(/é menor que/g, '<');
+    condJS = condJS.replace(/\b([a-zA-Z_]\w*)\b/g, (m) => Object.prototype.hasOwnProperty.call(vars, m) ? toJS(vars[m]) : m);
+    condJS = condJS.replace(/==/g,'===').replace(/!=/g,'!==');
+
+    // Se veio após pergunta, comparar com lastResposta quando possível
+    if (lastWasPergunta && lastResposta !== null) {
+      const opMatch = condJS.match(/(===|!==|>=|<=|>|<)/);
+      const operator = opMatch ? opMatch[1] : '===';
+      let esperado = null;
+      const numMatch = condJS.match(/(===|!==|>=|<=|>|<)\s*([0-9]+(?:\.[0-9]+)?)/);
+      if (numMatch) esperado = Number(numMatch[2]);
+      else {
+        const strMatch = condJS.match(/"(.*?)"/);
+        if (strMatch) esperado = strMatch[1];
+      }
+      const leftJS = typeof lastResposta === 'number' ? String(lastResposta) : JSON.stringify(String(lastResposta));
+      const rightJS = typeof esperado === 'number' ? String(esperado) : JSON.stringify(String(esperado));
+      condJS = `${leftJS} ${operator} ${rightJS}`;
+    }
+
+    try { return !!eval(condJS); } catch { return false; }
+  }
+
+  function renderPagina(conteudo) {
+    if (!pageContent || !pageTitle) return;
+    pageContent.innerHTML = '';
+    pageTitle.textContent = currentFileName || 'Página';
+    // reset de estado simples
+    Object.keys(vars).forEach(k => delete vars[k]);
+    lastWasPergunta = false;
+
+    const linhas = String(conteudo)
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 0);
+
+    let condicaoAtiva = true;
+
+    linhas.forEach((linha) => {
+      if (linha.startsWith('mostrar')) {
+        const texto = linha.match(/"(.*?)"/); 
+        if (texto) {
+          if (condicaoAtiva) pageContent.appendChild(addParagraphWithLinks(texto[1]));
+        } else if (linha.includes(' + ')) {
+          const expr = linha.replace(/^mostrar\s+/, '');
+          let js = expr.replace(/([0-9]+),([0-9]+)/g, '$1.$2');
+          js = js.replace(/\b([a-zA-Z_]\w*)\b/g, (m) => Object.prototype.hasOwnProperty.call(vars, m) ? toJS(vars[m]) : m);
+          try {
+            const val = eval(js);
+            const isStr = typeof val === 'string';
+            const node = isStr ? addParagraphWithLinks(val) : document.createElement('p');
+            if (!isStr) node.textContent = String(val);
+            if (condicaoAtiva) pageContent.appendChild(node);
+          } catch {
+            const p = document.createElement('p');
+            p.textContent = expr;
+            if (condicaoAtiva) pageContent.appendChild(p);
+          }
+        }
+      } else if (/^(variavel|variável)\s/i.test(linha)) {
+        const m = linha.match(/^(variavel|variável)\s+([a-zA-Z_]\w*)\s+é\s+(.*)$/i);
+        if (m) vars[m[2]] = parseValor(m[3].trim());
+      } else if (/^[a-zA-Z_]\w*\s*=\s*.+$/.test(linha)) {
+        const m = linha.match(/^([a-zA-Z_]\w*)\s*=\s*(.+)$/);
+        vars[m[1]] = parseValor(m[2].trim());
+      } else if (linha.startsWith('perguntar') || linha.startsWith('pergunta')) {
+        const texto = linha.match(/"(.*?)"/); 
+        const pergunta = texto ? texto[1] : 'Digite a resposta:';
+        const box = document.createElement('div');
+        box.className = 'page-question';
+        box.innerHTML = `<div><strong>Pergunta:</strong> ${pergunta}</div>`;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Digite a resposta e pressione Enter';
+        input.value = lastResposta ?? '';
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            const raw = input.value;
+            const num = Number(String(raw).replace(',', '.'));
+            lastResposta = (!Number.isNaN(num) && raw !== '') ? num : String(raw);
+            lastWasPergunta = true;
+            renderPagina(conteudo); // re-render após resposta
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        });
+        box.appendChild(input);
+        pageContent.appendChild(box);
+      } else if (linha.startsWith('se ')) {
+        const condRaw = linha.replace(/^se\s+/, '').replace(/\s*então\s*$/,'').trim();
+        condicaoAtiva = avaliarCondicao(condRaw);
+        lastWasPergunta = false;
+      } else if (linha.startsWith('senão')) {
+        condicaoAtiva = !condicaoAtiva;
+      } else if (/^enquanto\s/i.test(linha)) {
+        const info = document.createElement('p');
+        info.textContent = 'Loop detectado (não simulado na visualização).';
+        pageContent.appendChild(info);
+        condicaoAtiva = true;
+      } // comentar e desconhecidos ignorados na página
+    });
+  }
+
+  function abrirArquivo(nome, conteudo) {
+    currentFileName = nome || 'programa.arbl';
+    urlInputEl.value = currentFileName;
+    renderPagina(conteudo || '');
+    setView('pagina');
+  }
+
+  function adicionarArquivoRecente(nome, conteudo) {
+    try {
+      const key = 'arabuscadorRecentes';
+      const item = { nome, conteudo, ts: Date.now() };
+      const lista = JSON.parse(localStorage.getItem(key) || '[]').filter(x => x.nome !== nome);
+      lista.unshift(item);
+      localStorage.setItem(key, JSON.stringify(lista.slice(0, 20)));
+      renderRecentes();
+    } catch { /* ignore */ }
+  }
+  function renderRecentes() {
+    if (!listaRecentes) return;
+    const key = 'arabuscadorRecentes';
+    const lista = JSON.parse(localStorage.getItem(key) || '[]');
+    listaRecentes.innerHTML = '';
+    if (lista.length === 0) {
+      listaRecentes.innerHTML = '<li>Nenhum arquivo recente</li>';
+      return;
+    }
+    lista.forEach(item => {
+      const li = document.createElement('li');
+      const span = document.createElement('span');
+      span.className = 'file-name';
+      span.textContent = item.nome;
+      const actions = document.createElement('div');
+      actions.className = 'file-actions';
+      const btnAbrir = document.createElement('button');
+      btnAbrir.textContent = 'Abrir';
+      btnAbrir.addEventListener('click', () => abrirArquivo(item.nome, item.conteudo));
+      const btnRemover = document.createElement('button');
+      btnRemover.textContent = 'Remover';
+      btnRemover.addEventListener('click', () => {
+        const nova = lista.filter(x => x.nome !== item.nome);
+        localStorage.setItem(key, JSON.stringify(nova));
+        renderRecentes();
+      });
+      actions.appendChild(btnAbrir);
+      actions.appendChild(btnRemover);
+      li.appendChild(span);
+      li.appendChild(actions);
+      listaRecentes.appendChild(li);
+    });
+  }
+
+  // ===== Inicialização e eventos =====
+  document.addEventListener('DOMContentLoaded', () => {
+    // tema (claro/escuro)
+    const toggleThemeBtn = document.getElementById('toggleTheme');
+    const setThemeIcon = () => {
+      if (!toggleThemeBtn) return;
+      toggleThemeBtn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+    };
+    const savedTheme = localStorage.getItem('arabuscadorTheme');
+    if (savedTheme === 'dark') {
+      document.body.classList.add('dark');
+    }
+    setThemeIcon();
+    if (toggleThemeBtn) {
+      toggleThemeBtn.addEventListener('click', () => {
+        document.body.classList.toggle('dark');
+        localStorage.setItem('arabuscadorTheme', document.body.classList.contains('dark') ? 'dark' : 'light');
+        setThemeIcon();
+      });
+    }
+
+    // abas (tabs)
+    const tabsBar = document.querySelector('.browser-tabs');
+    const newTabBtn = document.querySelector('.browser-tabs .new-tab');
+    let nextTabId = 1;
+    const setActiveTab = (tabEl) => {
+      document.querySelectorAll('.browser-tabs .tab').forEach(t => t.classList.remove('active'));
+      tabEl.classList.add('active');
+    };
+    const createTab = (title = 'Nova Aba') => {
+      const tabEl = document.createElement('div');
+      tabEl.className = 'tab';
+      tabEl.dataset.tab = `tab-${nextTabId++}`;
+      tabEl.innerHTML = `<span>${title}</span><span class="tab-close">✕</span>`;
+      tabEl.addEventListener('click', (e) => {
+        const target = e.target;
+        if (target && target.classList && target.classList.contains('tab-close')) return;
+        setActiveTab(tabEl);
+        limparParaHome();
+      });
+      const closeEl = tabEl.querySelector('.tab-close');
+      if (closeEl) closeEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isActive = tabEl.classList.contains('active');
+        tabEl.remove();
+        if (isActive) {
+          const firstTab = document.querySelector('.browser-tabs .tab');
+          if (firstTab) setActiveTab(firstTab);
+          limparParaHome();
+        }
+      });
+      if (tabsBar) tabsBar.insertBefore(tabEl, newTabBtn);
+      setActiveTab(tabEl);
+      limparParaHome();
+    };
+    const homeTab = document.querySelector('.browser-tabs .tab[data-tab="home"]');
+    if (homeTab) homeTab.addEventListener('click', (e) => {
+      const target = e.target;
+      if (target && target.classList && target.classList.contains('tab-close')) return;
+      setActiveTab(homeTab);
+      limparParaHome();
+    });
+    if (newTabBtn) newTabBtn.addEventListener('click', () => createTab());
+
+    // navegação (address bar)
+    const navVoltar = document.querySelector('.address-bar #btnVoltar');
+    const navAvancar = document.querySelector('.address-bar #btnAvancar');
+    const navRecarregar = document.querySelector('.address-bar #btnRecarregar');
+    if (navVoltar) navVoltar.addEventListener('click', () => navegarHistorico(-1));
+    if (navAvancar) navAvancar.addEventListener('click', () => navegarHistorico(1));
+    if (navRecarregar) navRecarregar.addEventListener('click', async () => {
+      if (currentFileName) {
+        await carregarArquivo(currentFileName);
+      } else {
+        limparParaHome();
+      }
+    });
+
+    // endereço
+    if (urlInputEl) {
+      urlInputEl.addEventListener('keydown', async (e) => {
+        if (e.key !== 'Enter') return;
+        const v = urlInputEl.value.trim();
+         if (!v) { limparParaHome(); return; }
+         if (v.startsWith('arbl://')) return await carregarArquivo(v.replace('arbl://',''));
+         if (v.startsWith('file://')) return abrirArquivoLocal(v);
+         return await carregarArquivo(v);
+      });
+    }
+
+    // Quick links
+    const btnAbrirExemplo = document.getElementById('btnAbrirExemplo');
+    if (btnAbrirExemplo) btnAbrirExemplo.addEventListener('click', () => carregarArquivo('exemplo.arbl'));
+    
+    document.querySelectorAll('#linkExemplo').forEach(el =>
+      el.addEventListener('click', () => carregarArquivo('exemplo.arbl'))
+    );
+    document.querySelectorAll('#linkIndex').forEach(el =>
+      el.addEventListener('click', () => carregarArquivo('index.arbl'))
+    );
+
+    // abrir arquivo local via input
+    document.querySelectorAll('#linkAbrirArquivo').forEach(el =>
+      el.addEventListener('click', () => { inputArquivoEl.value = ''; inputArquivoEl.click(); })
+    );
+    if (inputArquivoEl) {
+      inputArquivoEl.addEventListener('change', async () => {
+        const f = inputArquivoEl.files && inputArquivoEl.files[0];
+        if (!f) return;
+        const t = await f.text();
+        abrirArquivo(f.name, t);
+      });
+    }
+
+    // Recentes / Sobre / Editar
+    document.querySelectorAll('#linkRecentes').forEach(el =>
+      el.addEventListener('click', () => { renderRecentes(); setView('recentes'); })
+    );
+    document.querySelectorAll('#linkEditar').forEach(el =>
+      el.addEventListener('click', () => { window.location.href = 'arabulang.html'; })
+    );
+    
+    // Sobre
+    document.querySelectorAll('#linkSobre').forEach(el =>
+      el.addEventListener('click', () => setView('sobre'))
+    );
+    const btnVoltarSobre = document.querySelector('#sobreSection .btn.btn-secondary');
+    if (btnVoltarSobre) btnVoltarSobre.addEventListener('click', () => setView('home'));
+
+    // Ações da Página
+    if (btnVerCodigo) btnVerCodigo.addEventListener('click', () => { setView('editor'); updateActiveTabTitle('Editor'); });
+    const btnEditarDirect = document.getElementById('btnEditar');
+    if (btnEditarDirect) btnEditarDirect.addEventListener('click', () => { window.location.href = 'arabulang.html'; });
+    if (btnSalvarPagina) btnSalvarPagina.addEventListener('click', () => {
+      const blob = new Blob([codigoArabu?.value || ''], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = currentFileName || 'programa.arbl';
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(url);
+      a.remove();
+    });
+
+    // back/forward como site
+    window.addEventListener('popstate', async (ev) => {
+      const arquivo = ev.state?.arquivo || new URLSearchParams(location.search).get('arquivo');
+      if (arquivo) {
+        await carregarArquivo(decodeURIComponent(arquivo));
+      } else {
+        currentFileName = null;
+        if (pageTitle) pageTitle.textContent = '';
+        if (pageContent) pageContent.innerHTML = '';
+        setView('home');
+      }
+    });
+
+    // abrir por URL (?arquivo=...)
+    const params = new URLSearchParams(location.search);
+    const arquivo = params.get('arquivo');
+    if (arquivo) {
+      const c = decodeURIComponent(arquivo);
+      if (c.startsWith('file://')) abrirArquivoLocal(c); else carregarArquivo(c);
+    } else {
+      // página inicial estilo site
+      carregarPaginaPadrao();
+    }
+  });
+
+  // Corrigir conteúdo duplicado no abrirExemploArbl (se existir)
+  function abrirExemploArbl() {
+    carregarArquivo('exemplo.arbl');
+  }
+  // ... existing code ...
+</script>

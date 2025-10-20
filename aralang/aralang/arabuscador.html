@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arabuscador — Navegador Web ArabuLang 🐍</title>
+  <!-- Manifest incorporado diretamente para evitar erros de CORS -->
+  <script type="application/json" id="app-manifest">
+    {
+      "name": "Arabuscador",
+      "short_name": "Arabuscador",
+      "description": "Navegador de arquivos ArabuLang",
+      "start_url": "/arabuscador.html",
+      "display": "standalone",
+      "background_color": "#f0f0f5",
+      "theme_color": "#1e88e5",
+      "icons": [
+        {
+          "src": "icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ],
+      "file_handlers": [
+        {
+          "action": "/arabuscador.html",
+          "accept": {
+            "text/plain": [".arbl"]
+          }
+        }
+      ]
+    }
+  </script>
+  <style>
+    :root {
+      --primary-color: #FF1B2D;
+      --secondary-color: #FF8C2D;
+      --dark-color: #222;
+      --light-color: #fff;
+      --gray-color: #f0f0f5;
+      --border-color: #ddd;
+      --hover-color: #f5f5f5;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: var(--light-color);
+      color: var(--dark-color);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    /* Barra de navegação estilo Opera */
+    .browser-header {
+      background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 8px 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .browser-logo {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    
+    .browser-tabs {
+      display: flex;
+      background: #f8f8f8;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0 10px;
+    }
+    
+    .tab {
+      padding: 10px 15px;
+      border-right: 1px solid var(--border-color);
+      background: #f0f0f0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 200px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    
+    .tab.active {
+      background: white;
+      border-bottom: 2px solid var(--primary-color);
+    }
+    
+    .tab-close {
+      font-size: 14px;
+      opacity: 0.7;
+    }
+    
+    .tab-close:hover {
+      opacity: 1;
+    }
+    
+    .new-tab {
+      padding: 10px 15px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    
+    .address-bar {
+      display: flex;
+      padding: 10px;
+      background: #f8f8f8;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .nav-buttons {
+      display: flex;
+      gap: 10px;
+      margin-right: 10px;
+    }
+    
+    .nav-button {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: #555;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .nav-button:hover {
+      background: #e0e0e0;
+    }
+    
+    .url-input {
+      flex-grow: 1;
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      outline: none;
+      font-size: 14px;
+    }
+    
+    .url-input:focus {
+      border-color: var(--primary-color);
+    }
+    
+    /* Conteúdo principal */
+    .browser-content {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      overflow: hidden;
+    }
+    
+    .page-content {
+      flex-grow: 1;
+      overflow: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    /* Estilo para homepage */
+    .homepage {
+      width: 90%;
+      max-width: 1100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    
+    .search-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 20px 0;
+    }
+    
+    .exemplo-button {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 15px 30px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 20px 0;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+    }
+    
+    .exemplo-button:hover {
+      background-color: var(--secondary-color);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 12px 20px;
+      font-size: 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 25px;
+      outline: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .search-input:focus {
+      border-color: var(--primary-color);
+    }
+    
+    .quick-links {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      width: 100%;
+      max-width: 800px;
+    }
+    
+    .quick-link {
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .quick-link:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .quick-link-icon {
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: var(--primary-color);
+    }
+    
+    /* Editor de código */
+    .editor {
+      display: flex;
+      width: 100%;
+      max-width: 1100px;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    
+    .editor-container {
+      width: 100%;
+      display: none; /* Inicialmente oculto, mostrado quando um arquivo é aberto */
+    }
+    
+    textarea {
+      width: 32%;
+      height: 420px;
+      padding: 10px;
+      font-family: Consolas, monospace;
+      font-size: 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      resize: none;
+      outline: none;
+      background: #fff;
+    }
+    
+    textarea:focus {
+      border-color: var(--primary-color);
+    }
+    
+    .label {
+      font-weight: bold;
+      margin: 10px 0 5px;
+      text-align: center;
+    }
+    
+    /* Componentes adicionais */
+    .file-input {
+      display: none;
+    }
+    
+    .recent-files {
+      width: 90%;
+      max-width: 1100px;
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      display: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .recent-files h3 {
+      margin-top: 0;
+      color: var(--primary-color);
+      margin-bottom: 10px;
+    }
+    
+    .recent-files ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    
+    .recent-files li {
+      padding: 10px;
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .recent-files li:hover {
+      background-color: var(--hover-color);
+    }
+    
+    .recent-files li:last-child {
+      border-bottom: none;
+    }
+    
+    .file-name {
+      flex-grow: 1;
+    }
+    
+    .file-actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .file-actions button {
+      background: none;
+      border: none;
+      color: var(--primary-color);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 5px 10px;
+      border-radius: 4px;
+    }
+    
+    .file-actions button:hover {
+      background: #f0f0f0;
+    }
+    
+    .about-section {
+      width: 90%;
+      max-width: 1100px;
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      display: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .about-section h3 {
+      color: var(--primary-color);
+      margin-bottom: 15px;
+    }
+    
+    footer {
+      padding: 10px;
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+      border-top: 1px solid var(--border-color);
+      background: #f8f8f8;
+    }
+    
+    /* Botões de ação */
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      justify-content: center;
+    }
+    
+    .btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .btn:hover {
+      background-color: #e01020;
+    }
+    
+    .btn-secondary {
+      background-color: var(--secondary-color);
+    }
+    
+    .btn-secondary:hover {
+      background-color: #e07020;
+    }
+    
+    .btn-outline {
+      background-color: transparent;
+      color: var(--primary-color);
+      border: 1px solid var(--primary-color);
+    }
+    
+    .btn-outline:hover {
+      background-color: #fff0f0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Cabeçalho do navegador -->
+  <div class="browser-header">
+    <div class="browser-logo">🐍 Arabuscador</div>
+  </div>
+  
+  <!-- Abas do navegador -->
+  <div class="browser-tabs">
+    <div class="tab active" data-tab="home">
+      <span>Página Inicial</span>
+      <span class="tab-close">✕</span>
+    </div>
+    <div class="new-tab">+</div>
+  </div>
+  
+  <!-- Barra de endereço -->
+  <div class="address-bar">
+    <div class="nav-buttons">
+      <button class="nav-button" id="btnVoltar">←</button>
+      <button class="nav-button" id="btnAvancar">→</button>
+      <button class="nav-button" id="btnRecarregar">↻</button>
+    </div>
+    <input type="text" class="url-input" id="urlInput" placeholder="Digite um endereço .arbl ou pesquise...">
+  </div>
+  
+  <script>
+    // Função para verificar parâmetros na URL
+    function verificarParametrosURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const arquivo = urlParams.get('arquivo');
+      
+      if (arquivo) {
+        // Decodificar o caminho do arquivo
+        const caminhoArquivo = decodeURIComponent(arquivo);
+        
+        // Verificar se é uma URL de arquivo local
+        if (caminhoArquivo.startsWith('file://')) {
+          const localPath = caminhoArquivo.replace('file://', '');
+          abrirArquivoLocal(localPath);
+        } else if (caminhoArquivo.startsWith('arbl://')) {
+          // Protocolo personalizado arbl://
+          const arblPath = caminhoArquivo.replace('arbl://', '');
+          abrirArquivoArbl(arblPath);
+        } else {
+          // Tentar abrir como caminho relativo
+          fetch(caminhoArquivo)
+            .then(response => response.text())
+            .then(conteudo => {
+              abrirArquivo(caminhoArquivo, conteudo);
+            })
+            .catch(erro => {
+              console.error('Erro ao abrir arquivo:', erro);
+              mostrarMensagem('Erro ao abrir arquivo: ' + erro.message);
+            });
+        }
+      } else {
+        // Verificar se há arquivos de exemplo para mostrar na inicialização
+        carregarExemplosIniciais();
+      }
+    }
+    
+    // Função para abrir diretamente o exemplo.arbl
+    function abrirExemploArbl() {
+      // Conteúdo direto do exemplo.arbl para garantir que funcione mesmo se o arquivo não for encontrado
+      const conteudoExemplo = `comentar "Exemplo de programa ArabuLang"
+mostrar "Bem-vindo ao ArabuLang!"
+mostrar "Este é um exemplo de programa que pode ser aberto no Arabuscador"
+
+variavel contador = 1
+enquanto contador <= 5 fazer
+  mostrar "Contagem: " + contador
+  contador = contador + 1
+fim`;
+
+      // Abrir o conteúdo diretamente
+      abrirArquivo("exemplo.arbl", conteudoExemplo);
+      
+      // Adicionar aos arquivos recentes
+      adicionarArquivoRecente("exemplo.arbl");
+      
+      // Mostrar mensagem de sucesso
+      mostrarMensagem("Arquivo exemplo.arbl aberto com sucesso!");
+      
+      return false; // Evitar comportamento padrão do link
+
+mostrar "Vamos fazer uma contagem:"
+variavel contador = 1
+
+enquanto contador <= 5 faca
+  mostrar "Número: " + contador
+  contador = contador + 1
+fimenquanto
+
+mostrar "Fim da contagem!"`;
+      
+      // Abrir o arquivo diretamente com o conteúdo
+      abrirArquivo('exemplo.arbl', conteudoExemplo);
+      
+      // Também tentar carregar do arquivo real para futuros acessos
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', 'exemplo.arbl', true);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          // Se o arquivo existir, atualizar o conteúdo
+          abrirArquivo('exemplo.arbl', xhr.responseText);
+        }
+      };
+      xhr.send();
+    }
+    
+    // Função para carregar exemplos iniciais
+    function carregarExemplosIniciais() {
+      // Tentar carregar o arquivo exemplo.arbl por padrão
+      fetch('exemplo.arbl')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Arquivo não encontrado');
+          }
+          return response.text();
+        })
+        .then(conteudo => {
+          // Adicionar aos links rápidos
+          const linkExemplo = document.createElement('div');
+          linkExemplo.className = 'quick-link';
+          linkExemplo.innerHTML = `
+            <div class="quick-link-icon">📄</div>
+            <div>exemplo.arbl</div>
+          `;
+          linkExemplo.addEventListener('click', () => {
+            abrirArquivo('exemplo.arbl', conteudo);
+          });
+          
+          // Adicionar à lista de arquivos recentes
+          adicionarArquivoRecente('exemplo.arbl', conteudo);
+        })
+        .catch(erro => {
+          console.log('Arquivo exemplo.arbl não encontrado:', erro);
+        });
+        
+      // Tentar carregar o arquivo index.arbl por padrão
+      fetch('index.arbl')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Arquivo não encontrado');
+          }
+          return response.text();
+        })
+        .then(conteudo => {
+          // Adicionar aos links rápidos
+          const linkIndex = document.createElement('div');
+          linkIndex.className = 'quick-link';
+          linkIndex.innerHTML = `
+            <div class="quick-link-icon">🏠</div>
+            <div>index.arbl</div>
+          `;
+          linkIndex.addEventListener('click', () => {
+            abrirArquivo('index.arbl', conteudo);
+          });
+          
+          // Adicionar à lista de arquivos recentes
+          adicionarArquivoRecente('index.arbl', conteudo);
+        })
+        .catch(erro => {
+          console.log('Arquivo index.arbl não encontrado:', erro);
+        });
+    }
+  </script>
+  
+  <!-- Conteúdo principal -->
+  <div class="browser-content">
+    <div class="page-content">
+      <!-- Homepage -->
+      <div class="homepage" id="homepage">
+        <div class="search-container">
+          <input type="text" class="search-input" id="searchInput" placeholder="Pesquisar ou digitar endereço .arbl">
+        </div>
+        
+        <div style="margin: 20px 0; text-align: center;">
+          <button class="btn" id="btnAbrirExemplo" style="font-size: 18px; padding: 12px 24px;">
+            Abrir exemplo.arbl
+          </button>
+        </div>
+        
+        <div class="quick-links">
+          <div class="quick-link" id="linkExemplo">
+            <div class="quick-link-icon">📄</div>
+            <div>exemplo.arbl</div>
+          </div>
+          <div class="quick-link" id="linkIndex">
+            <div class="quick-link-icon">🏠</div>
+            <div>index.arbl</div>
+          </div>
+          <div class="quick-link" id="linkExemplos">
+            <div class="quick-link-icon">📚</div>
+            <div>Exemplos</div>
+          </div>
+          <div class="quick-link" id="linkNovoArquivo">
+            <div class="quick-link-icon">📝</div>
+            <div>Novo Arquivo</div>
+          </div>
+          <div class="quick-link" id="linkAbrirArquivo">
+            <div class="quick-link-icon">📂</div>
+            <div>Abrir Arquivo</div>
+          </div>
+          <div class="quick-link" id="linkRecentes">
+            <div class="quick-link-icon">🕒</div>
+            <div>Recentes</div>
+          </div>
+          <div class="quick-link" id="linkTutorial">
+            <div class="quick-link-icon">📖</div>
+            <div>Tutorial</div>
+          </div>
+          <div class="quick-link" id="linkEditar">
+            <div class="quick-link-icon">✏️</div>
+            <div>Editor ArabuLang</div>
+          </div>
+          <div class="quick-link" id="linkSobre">
+            <div class="quick-link-icon">ℹ️</div>
+            <div>Sobre</div>
+          </div>
+          <div class="quick-link" id="linkConfig">
+            <div class="quick-link-icon">⚙️</div>
+            <div>Configurações</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Arquivos recentes -->
+      <div class="recent-files" id="arquivosRecentes">
+        <h3>Arquivos Recentes</h3>
+        <ul id="listaRecentes">
+          <!-- Preenchido dinamicamente -->
+        </ul>
+      </div>
+      
+      <!-- Sobre o Arabuscador -->
+      <div class="about-section" id="sobreSection">
+        <h3>Sobre o Arabuscador</h3>
+        <p>O Arabuscador é um navegador especializado para arquivos .arbl do ArabuLang, uma linguagem didática para ensinar programação em português.</p>
+        <p>Desenvolvido por Arabuenã Peçanha Gomes © 2025</p>
+        <p>Recursos:</p>
+        <ul>
+          <li>Interface inspirada em navegadores modernos</li>
+          <li>Abrir arquivos .arbl como páginas web</li>
+          <li>Executar código ArabuLang diretamente</li>
+          <li>Visualizar a tradução para Python</li>
+          <li>Salvar arquivos .arbl</li>
+          <li>Histórico de arquivos recentes</li>
+          <li>Navegação entre páginas</li>
+        </ul>
+        
+        <div class="action-buttons">
+          <button class="btn" id="btnRegistrarProtocolo">Registrar como Navegador Padrão</button>
+          <button class="btn btn-secondary" id="btnVoltar">Voltar</button>
+        </div>
+      </div>
+      
+      <!-- Editor de código -->
+      <div class="editor-container" id="editorContainer">
+        <div class="action-buttons">
+          <button class="btn" id="btnExecutar">▶️ Executar</button>
+          <button class="btn btn-secondary" id="btnSalvar">💾 Salvar</button>
+          <button class="btn btn-outline" id="btnEditar">✏️ Editar no ArabuLang</button>
+        </div>
+        
+        <div class="editor">
+          <div>
+            <div class="label">💬 Código em ArabuLang:</div>
+            <textarea id="codigoArabu" placeholder='Abra um arquivo .arbl ou digite comandos em ArabuLang...'></textarea>
+          </div>
+          <div>
+            <div class="label">🐍 Código em Python:</div>
+            <textarea id="codigoPython" readonly></textarea>
+          </div>
+          <div>
+            <div class="label">🖥️ Saída natural:</div>
+            <textarea id="saidaNatural" readonly style="background:#f9f9f9;color:#222;"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Input de arquivo oculto -->
+  <input type="file" id="inputArquivo" class="file-input" accept=".arbl,text/plain">
+  
+  <footer>Desenvolvido por Arabuenã Peçanha Gomes © 2025</footer>
+</body>
+</html>

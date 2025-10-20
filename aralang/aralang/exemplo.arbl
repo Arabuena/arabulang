@@ -1,0 +1,12 @@
+comentar "Exemplo de programa ArabuLang"
+mostrar "Bem-vindo ao ArabuLang!"
+mostrar "Este é um exemplo de programa que pode ser aberto no Arabuscador"
+
+mostrar "Vamos fazer uma contagem:"
+variavel contador é 1
+
+enquanto contador menor ou igual a 5
+  mostrar "Número: contador"
+  variavel contador é contador mais 1
+
+mostrar "Fim da contagem!"
